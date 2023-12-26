@@ -57,12 +57,14 @@ app.get("/api/persons", (req, res) => {
 app.get("/info", (req, res) => {
     const timeRequestSent = new Date().toString();
 
-    res.send(
-        `
-            <p>Phonebook has info for ${persons.length} people</p>
-            <p>${timeRequestSent}</p>
-       `
-    );
+    Person.find({}).then((people) => {
+        res.send(
+            `
+				<p>Phonebook has info for ${people.length} people</p>
+				<p>${timeRequestSent}</p>
+		   `
+        );
+    });
 });
 
 app.get("/api/persons/:id", (req, res) => {
@@ -99,19 +101,13 @@ app.post("/api/persons/", (req, res) => {
         return res.status(400).json({
             error: `${!body.name ? "name" : "number"} was missing`,
         });
-    } else if (persons.find((person) => person.name === body.name)) {
-        return res.status(400).json({
-            error: `name must be unique`,
-        });
     }
 
-    const person = {
-        id: generateId(),
-        ...body,
-    };
+    const person = new Person({ ...body });
 
-    persons = persons.concat(person);
-    res.json(person);
+    person.save().then((savedPerson) => {
+        res.json(savedPerson);
+    });
 });
 
 const PORT = process.env.PORT;
