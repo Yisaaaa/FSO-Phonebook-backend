@@ -19,6 +19,20 @@ morgan.token("body", (req) => {
     return JSON.stringify(req.body);
 });
 
+// Error handler middleware
+const errorHandler = (error, req, res, next) => {
+    if (error.name === "CastError") {
+        return res.status(400).json({ error: "malformed id" });
+    }
+
+    next(error);
+};
+
+// Unknown endpoint handler
+const unknownEndpoint = (req, res, next) => {
+    res.status(404).send({ error: "unknown endpoint" });
+};
+
 // let persons = [
 // 	{
 // 		id: 1,
@@ -67,25 +81,33 @@ app.get("/info", (req, res) => {
     });
 });
 
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
     const id = req.params.id;
-    const person = persons.find((person) => person.id.toString() === id);
 
-    if (person) {
-        res.json(person);
-    } else {
-        res.status(404);
-        res.json({
-            error: "The person you are looking for was not found in the phonebook",
+    Person.findById(id)
+        .then((person) => {
+            if (person) {
+                res.json(person);
+            } else {
+                res.status(404).json({ error: "person does not exist" });
+            }
+        })
+        .catch((err) => {
+            next(err);
         });
-    }
 });
 
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/api/persons/:id", (req, res, next) => {
     const id = req.params.id;
-    persons = persons.filter((person) => person.id.toString() !== id);
 
-    res.status(204).end();
+    Person.findByIdAndDelete(id)
+        .then((result) => {
+            console.log(result);
+            res.status(204).end();
+        })
+        .catch((err) => {
+            next(err);
+        });
 });
 
 app.use(
@@ -109,6 +131,27 @@ app.post("/api/persons/", (req, res) => {
         res.json(savedPerson);
     });
 });
+
+app.put("/api/persons/:id", (req, res, next) => {
+    const body = req.body;
+    const id = req.params.id;
+
+    const person = {
+        name: body.name,
+        number: body.number,
+    };
+    console.log(person);
+
+    Person.findByIdAndUpdate(id, person, { new: true })
+        .then((person) => {
+            console.log(person);
+            res.json(person);
+        })
+        .catch((err) => next(err));
+});
+
+app.use(unknownEndpoint);
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 
