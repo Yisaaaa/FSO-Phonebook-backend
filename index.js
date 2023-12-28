@@ -150,7 +150,11 @@ app.put("/api/persons/:id", (req, res, next) => {
     };
     console.log(person);
 
-    Person.findByIdAndUpdate(id, person, { new: true })
+    Person.findByIdAndUpdate(id, person, {
+        new: true,
+        runValidators: true,
+        context: "query",
+    })
         .then((person) => {
             console.log(person);
             res.json(person);
