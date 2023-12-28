@@ -8,9 +8,35 @@ mongoose
     .then((result) => console.log("Successfully connected to MongoDB"))
     .catch((err) => console.log("Failed connecting to MongoDB:", err.message));
 
+const numberValidator = (number) => {
+    const [firstSplit, secondSplit] = number.split("-");
+    if (isNaN(firstSplit) || isNaN(secondSplit)) {
+        return false;
+    }
+    const firstSplitLength = firstSplit.length;
+    const secondSplitLength = secondSplit.length;
+
+    const isValid = firstSplitLength === 2 || firstSplitLength === 3;
+
+    return number.includes("-") && isValid;
+};
+
 const personSchema = new mongoose.Schema({
-    name: String,
-    number: String,
+    name: {
+        type: String,
+        minLength: 3,
+        required: true,
+    },
+    number: {
+        type: String,
+        validate: {
+            validator: (value) => {
+                return numberValidator(value);
+            },
+            message: (props) => `${props.value} is not a valid number`,
+        },
+        required: true,
+    },
 });
 
 personSchema.set("toJSON", {

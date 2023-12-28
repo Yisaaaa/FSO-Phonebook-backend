@@ -23,6 +23,8 @@ morgan.token("body", (req) => {
 const errorHandler = (error, req, res, next) => {
     if (error.name === "CastError") {
         return res.status(400).json({ error: "malformed id" });
+    } else if (error.name === "ValidationError") {
+        return res.status(400).json({ error: error.message });
     }
 
     next(error);
@@ -116,7 +118,7 @@ app.use(
     )
 );
 
-app.post("/api/persons/", (req, res) => {
+app.post("/api/persons/", (req, res, next) => {
     const body = req.body;
 
     if (!body.name || !body.number) {
@@ -127,9 +129,15 @@ app.post("/api/persons/", (req, res) => {
 
     const person = new Person({ ...body });
 
-    person.save().then((savedPerson) => {
-        res.json(savedPerson);
-    });
+    person
+        .save()
+        .then((savedPerson) => {
+            res.json(savedPerson);
+        })
+        .catch((err) => {
+            console.log(err.name);
+            next(err);
+        });
 });
 
 app.put("/api/persons/:id", (req, res, next) => {
