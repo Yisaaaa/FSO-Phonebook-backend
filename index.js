@@ -31,7 +31,7 @@ const errorHandler = (error, req, res, next) => {
 };
 
 // Unknown endpoint handler
-const unknownEndpoint = (req, res, next) => {
+const unknownEndpoint = (req, res) => {
     res.status(404).send({ error: "unknown endpoint" });
 };
 
@@ -62,6 +62,12 @@ const unknownEndpoint = (req, res, next) => {
 //     const randomId = Math.round(Math.random() * 9999999999);
 //     return randomId;
 // }
+
+app.use(
+    morgan(
+        ":method :url :status :res[content-length] - :response-time ms :body"
+    )
+);
 
 // Routes
 app.get("/api/persons", (req, res) => {
@@ -111,12 +117,6 @@ app.delete("/api/persons/:id", (req, res, next) => {
             next(err);
         });
 });
-
-app.use(
-    morgan(
-        ":method :url :status :res[content-length] - :response-time ms :body"
-    )
-);
 
 app.post("/api/persons/", (req, res, next) => {
     const body = req.body;
